@@ -7,9 +7,12 @@
 
 : ${NEKRS_INSTALL_DIR:=${HOME}/.local/nekrs}
 
-: ${NEKRS_CC:="/soft/libraries/mpi/mpich-gcc-3.1.4/bin/mpicc"}
-: ${NEKRS_CXX:="/soft/libraries/mpi/mpich-gcc-3.1.4/bin/mpic++"}
-: ${NEKRS_FC:="/soft/libraries/mpi/mpich-gcc-3.1.4/bin/mpif77"}
+  #${NEKRS_CC:="/soft/libraries/mpi/mpich-gcc-3.1.4/bin/mpicc"}
+  #${NEKRS_CXX:="/soft/libraries/mpi/mpich-gcc-3.1.4/bin/mpic++"}
+  #${NEKRS_FC:="/soft/libraries/mpi/mpich-gcc-3.1.4/bin/mpif77"}
+: ${NEKRS_CC:="mpicc"}
+: ${NEKRS_CXX:="mpic++"}
+: ${NEKRS_FC:="mpif77"}
 : ${NEKRS_CXXFLAGS:="-O2 -g -DUSE_OCCA_MEM_BYTE_ALIGN=32"}
 
 : ${OCCA_CUDA_ENABLED:=0}
@@ -17,9 +20,13 @@
 : ${OCCA_OPENCL_ENABLED:=0}
 
 # ASCENT, ssp
-: ${ASCENT_PATH:="/home/spatel/A21/ASCENT/ascent/install"}
-: ${CONDUIT_PATH:="/home/spatel/A21/ASCENT/conduit/install"}
-: ${VTKH_PATH:="/home/spatel/A21/ASCENT/vtk-h/install"}
+
+  #${ASCENT_PATH:="/home/spatel/A21/ASCENT/ascent/install"}
+  #${CONDUIT_PATH:="/home/spatel/A21/ASCENT/conduit/install"}
+  #${VTKH_PATH:="/home/spatel/A21/ASCENT/vtk-h/install"}
+: ${ASCENT_PATH:="/home/srizzi/ascent/install/ascent"}
+: ${CONDUIT_PATH:="/home/srizzi/ascent/install/conduit"}
+: ${VTKH_PATH:="/home/srizzi/ascent/install/vtkh"}
 
 ###############################################################################
 # DONT'T TOUCH WHAT FOLLOWS !!!
@@ -172,7 +179,7 @@ mkdir -p "${NEKRS_BUILD_DIR}" > /dev/null 2>&1
 rm -rf "${NEKRS_BUILD_DIR}"/CMakeCache.txt "${NEKRS_BUILD_DIR}"/*.cmake > /dev/null 2>&1
 
 cd "${NEKRS_BUILD_DIR}"
-/soft/buildtools/cmake-3.13.3/bin/cmake -DCMAKE_BUILD_TYPE="${NEKRS_BUILD_TYPE}" \
+cmake -DCMAKE_BUILD_TYPE="${NEKRS_BUILD_TYPE}" \
       -DCMAKE_Fortran_COMPILER="${NEKRS_FC}" \
       -DCMAKE_C_COMPILER="${NEKRS_CC}" \
       -DCMAKE_CXX_COMPILER="${NEKRS_CXX}" \

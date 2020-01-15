@@ -6,6 +6,7 @@
 #include "parReader.hpp"
 #include "configReader.hpp"
 #include "runTime.hpp"
+#include "ascent/AscentNekRS.h"
 
 static int rank, size;
 static MPI_Comm comm;
@@ -22,11 +23,19 @@ static void setCache(string dir);
 static void setOUDF(libParanumal::setupAide &options);
 static void dryRun(libParanumal::setupAide &options, int npTarget); 
 
+static AscentNekRS ascentNek;
+
+
 namespace nekrs {
 
 void setup(MPI_Comm comm_in, int buildOnly, int sizeTarget, 
            int ciMode, string cacheDir, string _setupFile)
 {
+
+  // init Ascent
+  ascentNek.init();
+
+
   MPI_Comm_dup(comm_in, &comm);
   MPI_Comm_rank(comm, &rank);
   MPI_Comm_size(comm, &size);

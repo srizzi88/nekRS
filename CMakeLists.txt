@@ -243,6 +243,10 @@ set(THIRD_PARTY_INCLUDES ${THIRD_PARTY_INCLUDES}
   ${PARALMONDDIR}
   ${ELLIPTICDIR}
   ${CDSDIR}
+ 
+  ${CONDUIT_DIR}/include/conduit
+  ${ASCENT_DIR}/include/ascent
+
 )
 
 set(NEKRS_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/src
@@ -340,6 +344,10 @@ set(SRC
     src/timer.cpp
     ## To get fortran flags
     src/dummy.f
+
+    # Ascent files
+    src/ascent/AscentNekRS.cpp
+
 )
 
 add_library(nekrs-lib SHARED ${SRC})
