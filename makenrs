@@ -7,14 +7,19 @@
 
 : ${NEKRS_INSTALL_DIR:=${HOME}/.local/nekrs}
 
-: ${NEKRS_CC:="mpicc"}
-: ${NEKRS_CXX:="mpic++"}
-: ${NEKRS_FC:="mpif77"}
+: ${NEKRS_CC:="/soft/libraries/mpi/mpich-gcc-3.1.4/bin/mpicc"}
+: ${NEKRS_CXX:="/soft/libraries/mpi/mpich-gcc-3.1.4/bin/mpic++"}
+: ${NEKRS_FC:="/soft/libraries/mpi/mpich-gcc-3.1.4/bin/mpif77"}
 : ${NEKRS_CXXFLAGS:="-O2 -g -DUSE_OCCA_MEM_BYTE_ALIGN=32"}
 
-: ${OCCA_CUDA_ENABLED:=1}
+: ${OCCA_CUDA_ENABLED:=0}
 : ${OCCA_HIP_ENABLED:=0}
 : ${OCCA_OPENCL_ENABLED:=0}
+
+# ASCENT, ssp
+: ${ASCENT_PATH:="/home/spatel/A21/ASCENT/ascent/install"}
+: ${CONDUIT_PATH:="/home/spatel/A21/ASCENT/conduit/install"}
+: ${VTKH_PATH:="/home/spatel/A21/ASCENT/vtk-h/install"}
 
 ###############################################################################
 # DONT'T TOUCH WHAT FOLLOWS !!!
@@ -70,6 +75,10 @@ export NEKRS_LIBP_DIR="${NEKRS_INSTALL_DIR}/libparanumal"
 
 export OCCA_CXXFLAGS="${NEKRS_CXXFLAGS} ${NEKRS_LIBP_DEFINES}"
 export OCCA_DIR="${NEKRS_INSTALL_DIR}/occa"
+
+export ASCENT_PATH
+export CONDUIT_PATH
+export VTKH_PATH
 
 export PATH="${NEKRS_INSTALL_DIR}/bin:${PATH}"
 
@@ -163,7 +172,7 @@ mkdir -p "${NEKRS_BUILD_DIR}" > /dev/null 2>&1
 rm -rf "${NEKRS_BUILD_DIR}"/CMakeCache.txt "${NEKRS_BUILD_DIR}"/*.cmake > /dev/null 2>&1
 
 cd "${NEKRS_BUILD_DIR}"
-cmake -DCMAKE_BUILD_TYPE="${NEKRS_BUILD_TYPE}" \
+/soft/buildtools/cmake-3.13.3/bin/cmake -DCMAKE_BUILD_TYPE="${NEKRS_BUILD_TYPE}" \
       -DCMAKE_Fortran_COMPILER="${NEKRS_FC}" \
       -DCMAKE_C_COMPILER="${NEKRS_CC}" \
       -DCMAKE_CXX_COMPILER="${NEKRS_CXX}" \
@@ -173,6 +182,9 @@ cmake -DCMAKE_BUILD_TYPE="${NEKRS_BUILD_TYPE}" \
       -DCMAKE_INSTALL_PREFIX="${NEKRS_INSTALL_DIR}" \
       -DNEK5000_PPLIST="${NEKRS_NEK5000_PPLIST}" \
       -DLIBP_DEFINES="${NEKRS_LIBP_DEFINES}" \
+      -DASCENT_DIR="${ASCENT_PATH}" \
+      -DCONDUIT_DIR="${CONDUIT_PATH}" \
+      -DVTKH_DIR="${VTKH_PATH}" \
       ${NEKRS_DIR} && make install
 
 
