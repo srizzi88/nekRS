@@ -364,7 +364,7 @@ target_link_libraries(nekrs-bin nekrs-lib)
 #######################
 ### link to Ascent  ###
 #######################
-target_link_libraries(nekrs-bin ascent::ascent)
+target_link_libraries(nekrs-bin ascent::ascent_mpi)
 target_include_directories(nekrs-bin PRIVATE ${THIRD_PARTY_INCLUDES} ${NEKRS_INCLUDES})
 set_target_properties(nekrs-bin PROPERTIES OUTPUT_NAME nekrs)
 

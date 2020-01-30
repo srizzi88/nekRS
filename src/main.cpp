@@ -69,6 +69,12 @@ not be used for advertising or product endorsement purposes.
 #include <getopt.h>
 #include "nekrs.hpp"
 
+//ssp - edits
+#include <ascent.hpp>
+#include "conduit_blueprint.hpp"
+using namespace ascent;
+using namespace conduit;
+
 static MPI_Comm comm;
 
 struct cmdOptions {
@@ -110,6 +116,15 @@ int main(int argc, char **argv)
  
   cmdOptions *cmdOpt = processCmdLineOptions(argc, argv);
 
+  //Ascent Init
+  Node ascent_opts;
+  Ascent asnt;
+  ascent_opts["mpi_comm"] = MPI_Comm_c2f(comm);
+  ascent_opts["runtime/type"] = "ascent";
+  asnt.open(ascent_opts);    
+  std::cout << "AscentNekRS Init Done" << std::endl;
+  //exit(EXIT_FAILURE);
+
   std::string cacheDir; 
   nekrs::setup(comm, cmdOpt->buildOnly, cmdOpt->sizeTarget,
                cmdOpt->ciMode, cacheDir, cmdOpt->setupFile);
@@ -140,6 +155,8 @@ int main(int argc, char **argv)
     if (outputStep > 0) {
       if (tStep%outputStep == 0 || tStep == NtimeSteps) isOutputStep = 1;
     }
+
+    // Ascent Integration
 
     if (isOutputStep) nekrs::copyToNek(time, tStep);
     nekrs::udfExecuteStep(time, tStep, isOutputStep);

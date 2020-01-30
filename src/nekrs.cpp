@@ -25,16 +25,11 @@ static void dryRun(libParanumal::setupAide &options, int npTarget);
 
 static AscentNekRS ascentNek;
 
-
 namespace nekrs {
 
 void setup(MPI_Comm comm_in, int buildOnly, int sizeTarget, 
            int ciMode, string cacheDir, string _setupFile)
 {
-
-  // init Ascent
-  ascentNek.init();
-
 
   MPI_Comm_dup(comm_in, &comm);
   MPI_Comm_rank(comm, &rank);
