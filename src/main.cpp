@@ -60,13 +60,13 @@ not be used for advertising or product endorsement purposes.
 
 \*---------------------------------------------------------------------------*/
 
-#include <fenv.h>
 #include <mpi.h>
 #include <iostream>
 #include <cstdio>
 #include <string>
 #include <cstring>
 #include <getopt.h>
+#include <cfenv>
 #include "nekrs.hpp"
 
 //ssp - edits
@@ -74,6 +74,7 @@ not be used for advertising or product endorsement purposes.
 #include "conduit_blueprint.hpp"
 using namespace ascent;
 using namespace conduit;
+#define DEBUG
 
 static MPI_Comm comm;
 
@@ -81,6 +82,7 @@ struct cmdOptions {
   int buildOnly = 0;
   int ciMode = 0;
   int sizeTarget = 0;
+  int debug = 0;
   std::string setupFile;
 };
 
@@ -89,10 +91,6 @@ static cmdOptions *processCmdLineOptions(int argc, char **argv);
 
 int main(int argc, char **argv)
 {
-#ifdef DEBUG
-  feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW);
-#endif
-
   int retval;
   retval =  MPI_Init(&argc, &argv);
   if (retval != MPI_SUCCESS) {
@@ -105,15 +103,6 @@ int main(int argc, char **argv)
   MPI_Comm_rank(comm, &rank);
   MPI_Comm_size(comm, &size);
 
-#ifdef DEBUG
-  if (rank == 0) {
-    char str[10];
-    cout << "Connect debugger, then press enter to continue" << endl;
-    gets(str);
-  }
-  MPI_Barrier(comm);
-#endif
- 
   cmdOptions *cmdOpt = processCmdLineOptions(argc, argv);
 
   //Ascent Init
@@ -124,6 +113,15 @@ int main(int argc, char **argv)
   asnt.open(ascent_opts);    
   std::cout << "AscentNekRS Init Done" << std::endl;
   //exit(EXIT_FAILURE);
+  if (cmdOpt->debug) { 
+    if (rank == 0) {
+      std::cout << "Attach debugger, then press enter to continue\n";
+      std::cin.get(); 
+    }
+    MPI_Barrier(comm);
+  } 
+
+  if(cmdOpt->debug) feraiseexcept(FE_ALL_EXCEPT);  
 
   std::string cacheDir; 
   nekrs::setup(comm, cmdOpt->buildOnly, cmdOpt->sizeTarget,
@@ -160,7 +158,10 @@ int main(int argc, char **argv)
 
     if (isOutputStep) nekrs::copyToNek(time, tStep);
     nekrs::udfExecuteStep(time, tStep, isOutputStep);
-    if (isOutputStep) nekrs::nekOutfld();
+    if (isOutputStep) {
+      nekrs::copyToNek(time, tStep); 
+      nekrs::nekOutfld();
+    }
 
     ++tStep;
   }
@@ -190,10 +191,11 @@ static cmdOptions *processCmdLineOptions(int argc, char **argv)
           {"setup", required_argument, 0, 's'},
           {"cimode", required_argument, 0, 'c'},
           {"build-only", required_argument, 0, 'b'},
+          {"debug", no_argument, 0, 'd'},
           {0, 0, 0, 0}
       };
       int option_index = 0;
-      int c = getopt_long (argc, argv, "s:d:", long_options, &option_index);
+      int c = getopt_long (argc, argv, "s:", long_options, &option_index);
     
       if (c == -1)
         break;
@@ -212,21 +214,15 @@ static cmdOptions *processCmdLineOptions(int argc, char **argv)
                 std::cout << "ERROR: ci test id has to be >0!\n";
                 err = 1;
               }
-              break;  
+              break; 
+           case 'd':  
+              cmdOpt->debug = 1;
+              break; 
           default:  
               err = 1;
       }
     }  
   } 
-
-  MPI_Bcast(&err, sizeof(err), MPI_BYTE, 0, comm);
-  if (err) {
-    if (rank == 0)
-      std::cout << "usage: ./nekrs --setup <case name> [ --build-only <#procs> ] [ --cimode <id> ]"
-           << "\n";
-    MPI_Finalize(); 
-    exit(1);
-  }
 
   char buf[FILENAME_MAX];
   strcpy(buf, cmdOpt->setupFile.c_str());
@@ -235,6 +231,21 @@ static cmdOptions *processCmdLineOptions(int argc, char **argv)
   MPI_Bcast(&cmdOpt->buildOnly, sizeof(cmdOpt->buildOnly), MPI_BYTE, 0, comm);
   MPI_Bcast(&cmdOpt->sizeTarget, sizeof(cmdOpt->sizeTarget), MPI_BYTE, 0, comm);
   MPI_Bcast(&cmdOpt->ciMode, sizeof(cmdOpt->ciMode), MPI_BYTE, 0, comm);
+  MPI_Bcast(&cmdOpt->debug, sizeof(cmdOpt->debug), MPI_BYTE, 0, comm);
+
+  if(cmdOpt->setupFile.empty()) err++;
+
+  MPI_Bcast(&err, sizeof(err), MPI_BYTE, 0, comm);
+  if (err) {
+    if (rank == 0)
+      std::cout << "usage: ./nekrs --setup <case name> "
+                << "[ --build-only <#procs> ] [ --cimode <id> ] [ --debug ]"
+                << "\n";
+    MPI_Finalize(); 
+    exit(1);
+  }
+
+
 
  return cmdOpt;
 }

@@ -20,7 +20,10 @@ void ciSetup(MPI_Comm comm, setupAide &options)
   options.setArgs("FINAL TIME", string("0.1"));
   options.setArgs("DT", string("2e-4"));
   options.setArgs("SUBCYCLING STEPS", string("0"));
-  if (ciMode == 2) options.setArgs("SUBCYCLING STEPS", string("1"));
+  if (ciMode == 2) {
+    options.setArgs("VELOCITY BLOCK SOLVER", "TRUE");
+    options.setArgs("SUBCYCLING STEPS", string("1"));
+  }
   options.setArgs("TIME INTEGRATOR", "TOMBO2");
   options.setArgs("ADVECTION TYPE", "CONVECTIVE+CUBATURE");
   options.setArgs("VELOCITY SOLVER TOLERANCE", string("1e-12"));
@@ -36,7 +39,7 @@ void ciTestErrors(ins_t *ins, dfloat time, int tstep)
  
   const int rank = ins->mesh->rank;
  
-  nek_ocopyFrom(ins, time, tstep);
+  nek_ocopyFrom(time, tstep);
   nek_userchk();
 
   double *err = nekData.cbscnrs;
