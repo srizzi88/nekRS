@@ -20,15 +20,15 @@ set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_RPATH};${CMAKE_INSTALL_PREFIX}/gatherSc
 # Check compiler/MPI vendor, version and Fortran/C compatibility              #
 ###############################################################################
 macro(check_compiler_id compiler)
-  if(NOT "${compiler}" STREQUAL "GNU")
-    message(FATAL_ERROR "NekRS only supports GNU compilers")
-  endif()
+#  if(NOT "${compiler}" STREQUAL "GNU")
+#    message(FATAL_ERROR "NekRS only supports GNU compilers")
+#  endif()
 endmacro()
 
 macro(check_compiler_version compiler_version)
-  if(${compiler_version} LESS 6.2)
-    message(FATAL_ERROR "NekRS only supports GNU compiler versions >= 6.2")
-  endif()
+#  if(${compiler_version} LESS 6.2)
+#    message(FATAL_ERROR "NekRS only supports GNU compiler versions >= 6.2")
+#  endif()
 endmacro()
 
 check_compiler_id("${CMAKE_CXX_COMPILER_ID}")

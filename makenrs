@@ -5,17 +5,15 @@
 # USER SETTINGS
 ###############################################################################
 
-: ${NEKRS_INSTALL_DIR:=${HOME}/.local/nekrs}
+: ${NEKRS_INSTALL_DIR:="/home/srizzi/ascent/install/nekrs"}
+: ${NEKRS_BUILD_DIR:="/home/srizzi/ascent/build/nekrs"}
 
-  #${NEKRS_CC:="/soft/libraries/mpi/mpich-gcc-3.1.4/bin/mpicc"}
-  #${NEKRS_CXX:="/soft/libraries/mpi/mpich-gcc-3.1.4/bin/mpic++"}
-  #${NEKRS_FC:="/soft/libraries/mpi/mpich-gcc-3.1.4/bin/mpif77"}
 : ${NEKRS_CC:="mpicc"}
 : ${NEKRS_CXX:="mpic++"}
 : ${NEKRS_FC:="mpif77"}
 : ${NEKRS_CXXFLAGS:="-g -O2"}
 
-: ${OCCA_CXX:="gcc"}
+: ${OCCA_CXX:="icx"}
 : ${OCCA_CXXFLAGS:="-O3 -march=native -mtune=native"}
 : ${OCCA_CUDA_ENABLED:=0}
 : ${OCCA_HIP_ENABLED:=0}
@@ -23,12 +21,10 @@
 
 # ASCENT, ssp
 
-  #${ASCENT_PATH:="/home/spatel/A21/ASCENT/ascent/install"}
-  #${CONDUIT_PATH:="/home/spatel/A21/ASCENT/conduit/install"}
-  #${VTKH_PATH:="/home/spatel/A21/ASCENT/vtk-h/install"}
 : ${ASCENT_PATH:="/home/srizzi/ascent/install/ascent"}
 : ${CONDUIT_PATH:="/home/srizzi/ascent/install/conduit"}
 : ${VTKH_PATH:="/home/srizzi/ascent/install/vtkh"}
+
 
 ###############################################################################
 # DONT'T TOUCH WHAT FOLLOWS !!!
@@ -113,7 +109,8 @@ function nekrs_error() {
 }
 export -f nekrs_error
 
-export NEKRS_BUILD_DIR=`pwd`/build
+#export NEKRS_BUILD_DIR=`pwd`/build
+export NEKRS_BUILD_DIR
 
 if [ ${NEKRS_SOURCED} -eq 1 ]; then
   ${NEKRS_EXIT_CMD} 0
