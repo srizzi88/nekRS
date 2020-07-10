@@ -44,6 +44,14 @@ static int  (*nek_nbid_ptr)(int *);
 static long long (*nek_set_vert_ptr)(int *, int *);
 static void (*nek_dssum_ptr)(double *);
 
+//ssp
+static dfloat *tmp;
+static dfloat *swrk;
+static occa::memory o_tmp;
+static occa::memory o_vax;
+static int fTime = 1;
+//
+
 void noop_func(void) {}
 
 void *nek_ptr(const char *id){
@@ -654,6 +662,9 @@ void nek_ocopyFrom(dfloat time, int tstep) {
     (*ins)->o_U.copyTo((*ins)->U);
     (*ins)->o_P.copyTo((*ins)->P); 
     if((*ins)->Nscalar) (*ins)->cds->o_S.copyTo((*ins)->cds->S);
+    //ssp
+    nek_ascent(time,tstep);
+    //
     nek_copyFrom(time, tstep);
   }
 }
@@ -663,6 +674,22 @@ void nek_copyFrom(dfloat time, int tstep) {
   nek_copyFrom(time);
   *(nekData.istep) = tstep;
 }
+
+//ssp
+void nek_ascent(dfloat time, int tstep) {
+
+  if(fTime) {
+    mesh_t *mesh = (*ins)->mesh;
+    tmp = (dfloat *) calloc((*ins)->Nblock, sizeof(dfloat));
+    o_tmp = mesh->device.malloc((*ins)->Nblock*sizeof(dfloat), tmp);
+    swrk  = (dfloat *) calloc((*ins)->fieldOffset, sizeof(dfloat));
+    o_vax = mesh->device.malloc((*ins)->fieldOffset*sizeof(dfloat), swrk);
+    fTime = 0;
+  }
+  nek_ascent_s1(time);
+  *(nekData.istep) = tstep;
+}
+//
 
 void nek_ocopyTo(dfloat &time) {
 
@@ -737,4 +764,41 @@ long long nek_set_glo_num(int nx, int isTMesh) {
 void nek_dssum(dfloat *u) {
    
   (*nek_dssum_ptr)(u);
+}
+
+void nek_ascent_s1(dfloat time) {
+
+  if(rank==0) {
+    printf("GRAB Velocity Ascent Excercise\n");
+    fflush(stdout);
+  }
+
+  timeLast = time;
+  *(nekData.time) = time;
+
+  mesh_t *mesh = (*ins)->mesh;
+  dlong Nlocal = mesh->Nelements * mesh->Np;
+
+  dfloat *vax = (*ins)->U + 0*(*ins)->fieldOffset;
+  dfloat *vay = (*ins)->U + 1*(*ins)->fieldOffset;
+  dfloat *vaz = (*ins)->U + 2*(*ins)->fieldOffset;
+  o_vax.copyFrom(vax);  
+
+  // find the local maximum of velocity in x-direction
+  (*ins)->maxKernel((*ins)->Nlocal, o_vax, o_tmp);
+  o_tmp.copyTo(tmp);
+
+  // finish reduction
+  dfloat myvx = 0.f; 
+  for(dlong n=0; n<(*ins)->Nblock; ++n){
+    myvx  = mymax(myvx, tmp[n]);
+  }
+
+  dfloat gvx = 0.f;
+  MPI_Allreduce(&myvx, &gvx, 1, MPI_DFLOAT, MPI_MAX, mesh->comm);
+ 
+  if (rank==0) { 
+  printf("MAX x-velocity is:  %f \n" , gvx);
+  }
+
 }
