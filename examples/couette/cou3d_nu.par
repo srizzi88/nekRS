@@ -1,0 +1,21 @@
+[OCCA]
+backend = SERIAL
+deviceNumber = LOCAL-RANK
+
+[GENERAL] 
+polynomialOrder = 7
+#startFrom = restart.fld
+numSteps = 10
+dt = 1e-03 
+timeStepper = tombo2
+writeInterval = 1
+
+[PRESSURE]
+preconditioner = semg_amg
+residualTol = 1e-09
+
+[VELOCITY]
+boundaryTypeMap = inlet, wall
+residualTol = 1e-012
+density = 1.0
+viscosity = -10

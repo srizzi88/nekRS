@@ -1,0 +1,135 @@
+c-----------------------------------------------------------------------
+c     This routine creates the solution for an exact solution
+c     for Couette flow
+c     
+c     Steady-State is reach @ time ~ h^2/visc   
+c
+c-----------------------------------------------------------------------
+      subroutine uservp (ix,iy,iz,ieg)
+      include 'SIZE'
+      include 'TOTAL'
+      include 'NEKUSE'
+
+      udiff  = 0
+      utrans = 0
+
+      return
+      end
+c-----------------------------------------------------------------------
+      subroutine userf  (ix,iy,iz,ieg)
+      include 'SIZE'
+      include 'TOTAL'
+      include 'NEKUSE'
+
+      ffx = 0.0
+      ffy = 0.0
+      ffz = 0.0
+
+      return
+      end
+c-----------------------------------------------------------------------
+      subroutine userq  (ix,iy,iz,ieg)
+      include 'SIZE'
+      include 'TOTAL'
+      include 'NEKUSE'
+
+      qvol   = 0.0
+
+      return
+      end
+c-----------------------------------------------------------------------
+      subroutine userchk
+      include 'SIZE'
+      include 'TOTAL'
+      
+      common /exacu/ ue(lx1,ly1,lz1,lelt)
+      common /exacd/ ud(lx1,ly1,lz1,lelt)
+  
+      real arg_f, arg_s
+
+      n = nx1*ny1*nz1*nelv
+      visc = param(2)
+      u0 = 1.0    
+      one   = 1.0
+      pi    = 4.*atan(one)
+      arg_f = -visc*time*pi*pi  
+     
+      ymx = glamax(ym1,n)
+      ymn = glamin(ym1,n)
+      rh  = ymx-ymn 
+
+      do i=1,n
+         y = ym1(i,1,1,1)
+         arg_s = 1.0-(y/rh)
+         tmp = 0.0
+         do nn=1,2000    
+            arg_e = nn*nn*arg_f  !
+            re    = exp(arg_e)
+            rsne  = sin(nn*pi*arg_s)
+            f1    = 1/nn
+            f2    = 1/pi
+            tmp0  = -1.0*2.0*u0*re*rsne*f1*f2
+            tmp   = tmp + tmp0
+         enddo
+         ue(i,1,1,1) = u0*y/rh + tmp
+      enddo
+      
+      call sub3   (ud,ue,vx,n)
+      
+      umx = glamax(vx,n)
+      uex = glamax(ue,n)
+      udx = glamax(ud,n)
+      
+      if (nid.eq.0) then
+         write(6,11) istep,time,udx,umx,uex,u0,'  X err'
+   11    format(i5,1p5e14.6,a7)
+      endif
+
+      return
+      end
+c-----------------------------------------------------------------------
+      subroutine useric (ix,iy,iz,ieg)
+      include 'SIZE'
+      include 'TOTAL'
+      include 'NEKUSE'
+
+      ux=0.0
+      uy=0.0
+      uz=0.0
+
+      return
+      end
+c-----------------------------------------------------------------------
+      subroutine usrdat3
+      include 'SIZE'
+      include 'TOTAL'
+
+      return
+      end
+c-----------------------------------------------------------------------
+      subroutine usrdat2
+      include 'SIZE'
+      include 'TOTAL'
+
+      !Rescale
+      a = 0.0
+      b = 1.0
+      call rescale_x(xm1,a,b)
+      call rescale_x(ym1,a,b)
+      call rescale_x(zm1,a,b)
+
+      do iel=1,nelt
+      do ifc=1,2*ndim
+         if (cbc(ifc,iel,1) .eq. 'v  ') boundaryID(ifc,iel) = 1
+         if (cbc(ifc,iel,1) .eq. 'W  ') boundaryID(ifc,iel) = 2
+         !if (cbc(ifc,iel,1) .eq. 'P  ') boundaryID(ifc,iel) = 3
+      enddo
+      enddo
+
+      return
+      end
+c-----------------------------------------------------------------------
+      subroutine usrdat
+      return
+      end
+c-----------------------------------------------------------------------
