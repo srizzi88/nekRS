@@ -1,5 +1,5 @@
 /*---------------------------------------------------------------------------*\
-Copyright (c) 2019, UCHICAGO ARGONNE, LLC. 
+Copyright (c) 2019-2020, UCHICAGO ARGONNE, LLC. 
 
 The UChicago Argonne, LLC as Operator of Argonne National
 Laboratory holds copyright in the Software. The copyright holder
@@ -60,14 +60,16 @@ not be used for advertising or product endorsement purposes.
 
 \*---------------------------------------------------------------------------*/
 
-#include <fenv.h>
 #include <mpi.h>
 #include <iostream>
 #include <cstdio>
 #include <string>
 #include <cstring>
 #include <getopt.h>
+#include <cfenv>
 #include "nekrs.hpp"
+
+#define DEBUG
 
 static MPI_Comm comm;
 
@@ -75,7 +77,10 @@ struct cmdOptions {
   int buildOnly = 0;
   int ciMode = 0;
   int sizeTarget = 0;
+  int debug = 0;
   std::string setupFile;
+  std::string deviceID;
+  std::string backend;
 };
 
 static cmdOptions *processCmdLineOptions(int argc, char **argv); 
@@ -83,10 +88,6 @@ static cmdOptions *processCmdLineOptions(int argc, char **argv);
 
 int main(int argc, char **argv)
 {
-#ifdef DEBUG
-  feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW);
-#endif
-
   int retval;
   retval =  MPI_Init(&argc, &argv);
   if (retval != MPI_SUCCESS) {
@@ -99,20 +100,22 @@ int main(int argc, char **argv)
   MPI_Comm_rank(comm, &rank);
   MPI_Comm_size(comm, &size);
 
-#ifdef DEBUG
-  if (rank == 0) {
-    char str[10];
-    cout << "Connect debugger, then press enter to continue" << endl;
-    gets(str);
-  }
-  MPI_Barrier(comm);
-#endif
- 
   cmdOptions *cmdOpt = processCmdLineOptions(argc, argv);
+
+  if (cmdOpt->debug) { 
+    if (rank == 0) {
+      std::cout << "Attach debugger, then press enter to continue\n";
+      std::cin.get(); 
+    }
+    MPI_Barrier(comm);
+  } 
+
+  if(cmdOpt->debug) feraiseexcept(FE_ALL_EXCEPT);  
 
   std::string cacheDir; 
   nekrs::setup(comm, cmdOpt->buildOnly, cmdOpt->sizeTarget,
-               cmdOpt->ciMode, cacheDir, cmdOpt->setupFile);
+               cmdOpt->ciMode, cacheDir, cmdOpt->setupFile, 
+               cmdOpt->backend, cmdOpt->deviceID);
 
   if (cmdOpt->buildOnly) {
     MPI_Finalize(); 
@@ -129,21 +132,21 @@ int main(int argc, char **argv)
   double time = startTime;
   int tStep = 1;
   MPI_Pcontrol(1);
-  while (finalTime-time > 1e-10) {
+  while ((finalTime-time)/finalTime > 1e-6*nekrs::dt()) {
 
-    const double dt = nekrs::dt();
-
-    nekrs::runStep(time, dt, tStep);
-    time += dt;
+    nekrs::runStep(time, nekrs::dt(), tStep);
+    time += nekrs::dt();
 
     int isOutputStep = 0;
     if (outputStep > 0) {
       if (tStep%outputStep == 0 || tStep == NtimeSteps) isOutputStep = 1;
     }
 
-    if (isOutputStep) nekrs::copyToNek(time, tStep);
     nekrs::udfExecuteStep(time, tStep, isOutputStep);
-    if (isOutputStep) nekrs::nekOutfld();
+    if (isOutputStep) {
+      nekrs::copyToNek(time, tStep); 
+      nekrs::nekOutfld();
+    }
 
     ++tStep;
   }
@@ -173,10 +176,13 @@ static cmdOptions *processCmdLineOptions(int argc, char **argv)
           {"setup", required_argument, 0, 's'},
           {"cimode", required_argument, 0, 'c'},
           {"build-only", required_argument, 0, 'b'},
-          {0, 0, 0, 0}
+          {"debug", no_argument, 0, 'd'},
+          {"backend", required_argument, 0, 't'},
+          {"device-id", required_argument, 0, 'i'},
+        {0, 0, 0, 0}
       };
       int option_index = 0;
-      int c = getopt_long (argc, argv, "s:d:", long_options, &option_index);
+      int c = getopt_long (argc, argv, "s:", long_options, &option_index);
     
       if (c == -1)
         break;
@@ -195,6 +201,15 @@ static cmdOptions *processCmdLineOptions(int argc, char **argv)
                 std::cout << "ERROR: ci test id has to be >0!\n";
                 err = 1;
               }
+              break; 
+           case 'd':  
+              cmdOpt->debug = 1;
+              break; 
+          case 'i':
+              cmdOpt->deviceID.assign(optarg);  
+              break;  
+          case 't':
+              cmdOpt->backend.assign(optarg);  
               break;  
           default:  
               err = 1;
@@ -202,22 +217,35 @@ static cmdOptions *processCmdLineOptions(int argc, char **argv)
     }  
   } 
 
-  MPI_Bcast(&err, sizeof(err), MPI_BYTE, 0, comm);
-  if (err) {
-    if (rank == 0)
-      std::cout << "usage: ./nekrs --setup <case name> [ --build-only <#procs> ] [ --cimode <id> ]"
-           << "\n";
-    MPI_Finalize(); 
-    exit(1);
-  }
-
   char buf[FILENAME_MAX];
   strcpy(buf, cmdOpt->setupFile.c_str());
   MPI_Bcast(buf, sizeof(buf), MPI_BYTE, 0, comm);
   cmdOpt->setupFile.assign(buf);
+  strcpy(buf, cmdOpt->deviceID.c_str());
+  MPI_Bcast(buf, sizeof(buf), MPI_BYTE, 0, comm);
+  cmdOpt->deviceID.assign(buf);
+  strcpy(buf, cmdOpt->backend.c_str());
+  MPI_Bcast(buf, sizeof(buf), MPI_BYTE, 0, comm);
+  cmdOpt->backend.assign(buf);
   MPI_Bcast(&cmdOpt->buildOnly, sizeof(cmdOpt->buildOnly), MPI_BYTE, 0, comm);
   MPI_Bcast(&cmdOpt->sizeTarget, sizeof(cmdOpt->sizeTarget), MPI_BYTE, 0, comm);
   MPI_Bcast(&cmdOpt->ciMode, sizeof(cmdOpt->ciMode), MPI_BYTE, 0, comm);
+  MPI_Bcast(&cmdOpt->debug, sizeof(cmdOpt->debug), MPI_BYTE, 0, comm);
+
+  if(cmdOpt->setupFile.empty()) err++;
+
+  MPI_Bcast(&err, sizeof(err), MPI_BYTE, 0, comm);
+  if (err) {
+    if (rank == 0)
+      std::cout << "usage: ./nekrs --setup <case name> "
+                << "[ --build-only <#procs> ] [ --cimode <id> ] [ --debug ] "
+                << "[ --backend <CPU|CUDA|HIP|OPENCL> ] [ --device-id <id|LOCAL-RANK> ]"
+                << "\n";
+    MPI_Finalize(); 
+    exit(1);
+  }
+
+
 
  return cmdOpt;
 }

@@ -25,7 +25,8 @@ static void dryRun(libParanumal::setupAide &options, int npTarget);
 namespace nekrs {
 
 void setup(MPI_Comm comm_in, int buildOnly, int sizeTarget, 
-           int ciMode, string cacheDir, string _setupFile)
+           int ciMode, string cacheDir, string _setupFile, 
+           string _backend, string _deviceID)
 {
   MPI_Comm_dup(comm_in, &comm);
   MPI_Comm_rank(comm, &rank);
@@ -44,6 +45,9 @@ void setup(MPI_Comm comm_in, int buildOnly, int sizeTarget,
   }
 
   options = parRead(setupFile, comm);
+
+  if(!_backend.empty()) options.setArgs("THREAD MODEL", _backend); 
+  if(!_deviceID.empty()) options.setArgs("DEVICE NUMBER", _deviceID); 
 
   setOUDF(options);
 
@@ -84,7 +88,7 @@ void setup(MPI_Comm comm_in, int buildOnly, int sizeTarget,
   MPI_Barrier(comm);
 
   // init nek
-  nek_setup(comm, options);
+  nek_setup(comm, options, &ins);
   nek_setic();
   nek_userchk();
 
@@ -94,7 +98,7 @@ void setup(MPI_Comm comm_in, int buildOnly, int sizeTarget,
   // set initial condition
   int readRestartFile;
   options.getArgs("RESTART FROM FILE", readRestartFile);
-  if(readRestartFile) nek_copyRestart(ins);
+  if(readRestartFile) nek_copyRestart();
   if(udf.setup) udf.setup(ins);
   if(options.compareArgs("VARIABLEPROPERTIES", "TRUE")) {
     if(!udf.properties) {
@@ -118,13 +122,12 @@ void setup(MPI_Comm comm_in, int buildOnly, int sizeTarget,
   }
 
   if(udf.executeStep) udf.executeStep(ins, ins->startTime, 0);
-  nek_ocopyFrom(ins, ins->startTime, 0);
+  nek_ocopyFrom(ins->startTime, 0);
 
   timer::init(ins->mesh->comm, ins->mesh->device, 0);
 
   if(rank == 0) {
-    cout << "\nsettings:\n" << endl;
-    cout << ins->vOptions << endl;
+    cout << "\nsettings:\n" << endl << options << endl;
     size_t dMB = ins->mesh->device.memoryAllocated() / 1e6;
     cout << "device memory allocation: " << dMB << " MB" << endl;
     cout << "initialization took " << MPI_Wtime() - t0 << " seconds" << endl; 
@@ -139,7 +142,7 @@ void runStep(double time, double dt, int tstep)
 
 void copyToNek(double time, int tstep)
 {
-  nek_ocopyFrom(ins, time, tstep);
+  nek_ocopyFrom(time, tstep);
 }
 
 void udfExecuteStep(double time, int tstep, int isOutputStep)
@@ -153,6 +156,11 @@ void udfExecuteStep(double time, int tstep, int isOutputStep)
 
   nek_ifoutfld(0);
   ins->isOutputStep = 0;
+}
+
+void nekUserchk(void)
+{
+  nek_userchk();
 }
 
 void nekOutfld(void)

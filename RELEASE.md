@@ -1,8 +1,8 @@
-# Release v19.0
+# Release v20.0
 
 ## What is new? 
 
-* n/a
+* Initial release
 
 ## What you may have to change to be compatible 
 
@@ -10,7 +10,7 @@
 
 ## Known Bugs 
 
-* n/a
+[80](https://github.com/Nek5000/nekRS/issues/80)
 
 ## Thanks to our Contributors
 
