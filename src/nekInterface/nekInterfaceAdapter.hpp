@@ -114,4 +114,8 @@ void nek_copyRestart();
 long long nek_set_glo_num(int npts, int isTMesh);
 void nek_dssum(dfloat *u);
 
+void nek_ascent(dfloat time, int tstep);
+void nek_ascent_s1(dfloat time);
+
+
 #endif
