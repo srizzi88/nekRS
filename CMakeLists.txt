@@ -255,6 +255,8 @@ set(THIRD_PARTY_INCLUDES ${THIRD_PARTY_INCLUDES}
   ${PARALMONDDIR}
   ${ELLIPTICDIR}
   ${CDSDIR}
+  ${CONDUIT_DIR}/include/conduit
+  ${ASCENT_DIR}/include/ascent
 )
 
 set(NEKRS_INCLUDES 
@@ -307,6 +309,34 @@ add_custom_command(OUTPUT ${LIBP_BUILD_LIBRARIES}
 )
 
 ###############################################################################
+# ASCENT CHECKS                                                               #
+###############################################################################
+#
+# Provide default for ASCENT_DIR that works for an ascent install
+#
+if(NOT ASCENT_DIR)
+    set(ASCENT_DIR "/home/srizzi/ascent/install/ascent")
+endif()
+
+#
+# Check for valid Ascent install
+#
+get_filename_component(ASCENT_DIR ${ASCENT_DIR} ABSOLUTE)
+if(NOT EXISTS ${ASCENT_DIR}/lib/cmake/AscentConfig.cmake)
+    MESSAGE(FATAL_ERROR "Could not find Ascent CMake include file (${ASCENT_DIR}/lib/cmake/AscentConfig.cmake)")
+endif()
+
+#
+# Use CMake's find_package to import ascent's targets
+#
+find_package(Ascent REQUIRED
+             NO_DEFAULT_PATH 
+             PATHS ${ASCENT_DIR}/lib/cmake)
+
+
+
+
+###############################################################################
 # Add nekrs target                                                            #
 ###############################################################################
 set(SRC 
@@ -347,6 +377,10 @@ add_executable(nekrs-bin src/main.cpp)
 set_target_properties(nekrs-bin PROPERTIES LINKER_LANGUAGE CXX)
 add_dependencies(nekrs-bin nekrs-lib)
 target_link_libraries(nekrs-bin nekrs-lib)
+#######################
+### link to Ascent  ###
+#######################
+target_link_libraries(nekrs-bin ascent::ascent_mpi)
 target_include_directories(nekrs-bin PRIVATE ${THIRD_PARTY_INCLUDES} ${NEKRS_INCLUDES})
 set_target_properties(nekrs-bin PROPERTIES OUTPUT_NAME nekrs)
 

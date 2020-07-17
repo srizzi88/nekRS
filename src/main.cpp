@@ -71,6 +71,12 @@ not be used for advertising or product endorsement purposes.
 
 #define DEBUG
 
+#include <ascent.hpp>
+#include "conduit_blueprint.hpp"
+using namespace ascent;
+using namespace conduit;
+
+
 static MPI_Comm comm;
 
 struct cmdOptions {
@@ -127,6 +133,40 @@ int main(int argc, char **argv)
   const double startTime = nekrs::startTime();
   const double finalTime = nekrs::finalTime();
 
+/*--------------------------------------------------------------------------
+ *--------------------------------------------------------------------------
+ * Begin Ascent Integration
+ *--------------------------------------------------------------------------
+ *--------------------------------------------------------------------------*/
+  //
+  // setup Ascent In-situ rendering.
+  //
+  Ascent ascent;
+  Node ascent_opts;
+   
+  ascent_opts["mpi_comm"] = MPI_Comm_c2f(MPI_COMM_WORLD);
+  ascent.open(ascent_opts);
+ 
+  conduit::Node scenes;
+  scenes["s1/plots/p1/type"]  = "pseudocolor";
+  scenes["s1/plots/p1/field"] = "e";
+  double vec3[3];
+  vec3[0] = -0.6; vec3[1] = -0.6; vec3[2] = -0.8;
+  scenes["s1/renders/r1/camera/position"].set_float64_ptr(vec3,3);
+
+  conduit::Node actions;
+  conduit::Node &add_plots = actions.append();
+  add_plots["action"] = "add_scenes";
+  add_plots["scenes"] = scenes;
+  conduit::Node &execute = actions.append();
+  execute["action"] = "execute";
+
+  conduit::Node &reset_action = actions.append();
+  reset_action["action"] = "reset";
+
+  //////////////////////// 
+
+
   if (rank == 0) std::cout << "\nstarting time loop" << "\n";
     
   double time = startTime;
@@ -151,6 +191,14 @@ int main(int argc, char **argv)
     ++tStep;
   }
   MPI_Pcontrol(0);
+
+  ascent.close();
+
+  /*--------------------------------------------------------------------------
+   *--------------------------------------------------------------------------
+   * End Ascent Integration
+   *--------------------------------------------------------------------------
+   *--------------------------------------------------------------------------*/
 
   nekrs::printRuntimeStatistics();
 

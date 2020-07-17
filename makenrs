@@ -16,6 +16,10 @@
 #: ${OCCA_INCLUDE_PATH:="/usr/local/cuda/include"}
 #: ${OCCA_LIBRARY_PATH:="/usr/local/cuda/lib"}
 
+: ${ASCENT_PATH:="/home/srizzi/ascent/install/ascent"}
+: ${CONDUIT_PATH:="/home/srizzi/ascent/install/conduit"}
+: ${VTKH_PATH:="/home/srizzi/ascent/install/vtkh"}
+
 ###############################################################################
 # DONT'T TOUCH WHAT FOLLOWS !!!
 ###############################################################################
@@ -175,6 +179,10 @@ export NEKRS_LIBP_DIR="${NEKRS_INSTALL_DIR}/libparanumal"
 
 export OCCA_DIR="${NEKRS_INSTALL_DIR}/occa"
 
+export ASCENT_PATH
+export CONDUIT_PATH
+export VTKH_PATH
+
 export PATH="${NEKRS_INSTALL_DIR}/bin:${PATH}"
 
 function nekrs_info() {
@@ -220,6 +228,9 @@ cmake -DCMAKE_BUILD_TYPE="${NEKRS_BUILD_TYPE}" \
       -DCMAKE_INSTALL_PREFIX="${NEKRS_INSTALL_DIR}" \
       -DNEK5000_PPLIST="${NEKRS_NEK5000_PPLIST}" \
       -DLIBP_DEFINES="${NEKRS_LIBP_DEFINES}" \
+      -DASCENT_DIR="${ASCENT_PATH}" \
+      -DCONDUIT_DIR="${CONDUIT_PATH}" \
+      -DVTKH_DIR="${VTKH_PATH}" \
       ${NEKRS_DIR} && make install
 
 if [ $? -ne 0 ]; then
