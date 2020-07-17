@@ -76,6 +76,8 @@ not be used for advertising or product endorsement purposes.
 using namespace ascent;
 using namespace conduit;
 
+#include <nekInterfaceAdapter.hpp>
+
 
 static MPI_Comm comm;
 
@@ -176,6 +178,10 @@ int main(int argc, char **argv)
 
     nekrs::runStep(time, nekrs::dt(), tStep);
     time += nekrs::dt();
+
+    ascent.publish(getNekRSNode());
+    ascent.execute(actions);
+
 
     int isOutputStep = 0;
     if (outputStep > 0) {

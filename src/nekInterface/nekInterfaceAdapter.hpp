@@ -10,6 +10,8 @@
 #include "setupAide.hpp"
 #include "nrs.hpp"
 
+#include "conduit.hpp"
+
 #define DECLARE_USER_FUNC(a) void nek_ ## a(void);
 #define DEFINE_USER_FUNC(a) void nek_ ## a(void) { (* a ## _ptr)(); }
 
@@ -117,5 +119,6 @@ void nek_dssum(dfloat *u);
 void nek_ascent(dfloat time, int tstep);
 void nek_ascent_s1(dfloat time);
 
+conduit::Node getNekRSNode();
 
 #endif
