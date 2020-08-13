@@ -21,6 +21,8 @@ set(ALMONDDIR   ${NEKRS_INSTALL_DIR}/parAlmond)
 set(ELLIPTICDIR ${NEKRS_INSTALL_DIR}/elliptic)
 set(CDSDIR      ${NEKRS_INSTALL_DIR}/cds)
 set(INSDIR      ${NEKRS_INSTALL_DIR}/ins)
+set(CONDUITDIR  "/home/srizzi/ascent/install/conduit")
+set(ASCENTDIR   "/home/srizzi/ascent/install/ascent")
 set(INCLUDE_DIRS
   ${CMAKE_CURRENT_SOURCE_DIR}/../..
   ${INSDIR} 
@@ -36,6 +38,9 @@ set(INCLUDE_DIRS
   ${NEKRS_INSTALL_DIR}/include/udf
   ${NEKRS_INSTALL_DIR}/include/nekInterface
   ${NEKRS_INSTALL_DIR}/occa/include
+###SSP
+  ${CONDUITDIR}/include/conduit
+  ${ASCENTDIR}/include/ascent
 )
 
 execute_process(COMMAND bash -c "cp -f ${FILENAME} ${CMAKE_CURRENT_SOURCE_DIR}/udf.cpp")
