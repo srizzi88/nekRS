@@ -140,9 +140,11 @@ int main(int argc, char **argv)
  * Begin Ascent Integration
  *--------------------------------------------------------------------------
  *--------------------------------------------------------------------------*/
+  nekrs::ascent_test(comm);
   //
   // setup Ascent In-situ rendering.
   //
+  /*
   Ascent ascent;
   Node ascent_opts;
    
@@ -165,10 +167,12 @@ int main(int argc, char **argv)
 
   conduit::Node &reset_action = actions.append();
   reset_action["action"] = "reset";
-
+  */
   //////////////////////// 
+  //ascent.publish(getNekRSNode());
+  //ascent.execute(actions);
 
-
+  /*
   if (rank == 0) std::cout << "\nstarting time loop" << "\n";
     
   double time = startTime;
@@ -179,9 +183,8 @@ int main(int argc, char **argv)
     nekrs::runStep(time, nekrs::dt(), tStep);
     time += nekrs::dt();
 
-    ascent.publish(getNekRSNode());
+    //ascent.publish(getNekRSNode());
     ascent.execute(actions);
-
 
     int isOutputStep = 0;
     if (outputStep > 0) {
@@ -196,9 +199,9 @@ int main(int argc, char **argv)
 
     ++tStep;
   }
-  MPI_Pcontrol(0);
+  MPI_Pcontrol(0);*/
 
-  ascent.close();
+  //ascent.close();
 
   /*--------------------------------------------------------------------------
    *--------------------------------------------------------------------------

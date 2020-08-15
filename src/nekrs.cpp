@@ -7,6 +7,14 @@
 #include "configReader.hpp"
 #include "runTime.hpp"
 
+//ssp - ALPINE
+#include <ascent.hpp>
+#include "conduit_blueprint.hpp"
+using namespace ascent;
+using namespace conduit;
+#include <vector>
+//ssp - ALPINE
+
 static int rank, size;
 static MPI_Comm comm;
 
@@ -126,6 +134,55 @@ void setup(MPI_Comm comm_in, int buildOnly, int sizeTarget,
 
   timer::init(ins->mesh->comm, ins->mesh->device, 0);
 
+/// ASCENT ////
+  mesh_t *mesh = ins->mesh;
+
+  int vsize = mesh->Nelements*mesh->Np;
+  std::vector<dfloat> a_xc(vsize);
+  std::vector<dfloat> a_yc(vsize);
+  std::vector<dfloat> a_zc(vsize);
+  for(int i=0;i<vsize;i++)
+  {
+    a_xc[i] = mesh->x[i];
+    a_yc[i] = mesh->y[i];
+    a_zc[i] = mesh->z[i];
+  }
+
+  Ascent ascent;
+  Node ascent_opts;
+
+  ascent_opts["mpi_comm"]=MPI_Comm_c2f(comm);
+  ascent.open(ascent_opts);
+
+  conduit::Node mesh_data;
+  //coordinate system data
+  mesh_data["coordsets/coords/type"] = "explicit";
+  mesh_data["coordsets/coords/x"].set_external(a_xc);
+  mesh_data["coordsets/coords/y"].set_external(a_yc);
+  mesh_data["coordsets/coords/z"].set_external(a_zc);
+  //
+  // conduit::Node scenes;
+  // topology data
+  mesh_data["topologies/mesh/type"] = "unstructured";
+  mesh_data["topologies/mesh/coordset"] = "coords";
+  mesh_data["topologies/mesh/elements/shape"] = "hexs";
+  mesh_data["topologies/mesh/elements/connectivity"].set_external(mesh->EToV);
+  //
+  // one or more scalar fields
+  mesh_data["fields/xcoor/type"]         = "scalar";
+  mesh_data["fields/xcoor/topology"]     = "mesh";
+  mesh_data["fields/xcoor/association"]  = "vertex";
+  mesh_data["fields/xcoor/values"].set_external(mesh->x);
+  mesh_data.print();
+  
+  conduit::Node verify_info;
+  if(!conduit::blueprint::mesh::verify(mesh_data,verify_info))
+  {
+    CONDUIT_INFO("blueprint verify failed!" + verify_info.to_json());
+  }
+  cout << "Ascent Testing Done\n" << endl;
+//// ASCENT /////
+
   if(rank == 0) {
     cout << "\nsettings:\n" << endl << options << endl;
     size_t dMB = ins->mesh->device.memoryAllocated() / 1e6;
@@ -201,6 +258,63 @@ void *nekPtr(const char *id)
 void printRuntimeStatistics()
 {
   timer::printStat();
+}
+
+void ascent_test(MPI_Comm comm_in)
+{
+
+  MPI_Comm_dup(comm_in, &comm);
+  MPI_Comm_rank(comm, &rank);
+  MPI_Comm_size(comm, &size);
+/// ASCENT ////
+  mesh_t *mesh = ins->mesh;
+
+  int vsize = mesh->Nelements*mesh->Np;
+  std::vector<dfloat> a_xc(vsize);
+  std::vector<dfloat> a_yc(vsize);
+  std::vector<dfloat> a_zc(vsize);
+  for(int i=0;i<vsize;i++)
+  {
+    a_xc[i] = mesh->x[i];
+    a_yc[i] = mesh->y[i];
+    a_zc[i] = mesh->z[i];
+  }
+
+  Ascent ascent;
+  Node ascent_opts;
+
+  ascent_opts["mpi_comm"]=MPI_Comm_c2f(comm);
+  ascent.open(ascent_opts);
+
+  conduit::Node mesh_data;
+  //coordinate system data
+  mesh_data["coordsets/coords/type"] = "explicit";
+  mesh_data["coordsets/coords/x"].set_external(a_xc);
+  mesh_data["coordsets/coords/y"].set_external(a_yc);
+  mesh_data["coordsets/coords/z"].set_external(a_zc);
+  //
+  // conduit::Node scenes;
+  // topology data
+  mesh_data["topologies/mesh/type"] = "unstructured";
+  mesh_data["topologies/mesh/coordset"] = "coords";
+  mesh_data["topologies/mesh/elements/shape"] = "hexs";
+  mesh_data["topologies/mesh/elements/connectivity"].set_external(mesh->EToV);
+  //
+  // one or more scalar fields
+  mesh_data["fields/xcoor/type"]         = "scalar";
+  mesh_data["fields/xcoor/topology"]     = "mesh";
+  mesh_data["fields/xcoor/association"]  = "vertex";
+  mesh_data["fields/xcoor/values"].set_external(mesh->x);
+  mesh_data.print();
+  
+  conduit::Node verify_info;
+  if(!conduit::blueprint::mesh::verify(mesh_data,verify_info))
+  {
+    CONDUIT_INFO("blueprint verify failed!" + verify_info.to_json());
+  }
+  cout << "Ascent Testing Done\n" << endl;
+//// ASCENT /////
+
 }
 
 } // namespace
