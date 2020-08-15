@@ -25,6 +25,9 @@ const double finalTime(void);
 
 void *nekPtr(const char *id);
 
+//ssp
+void ascent_test(MPI_Comm);
+
 }
 
 #endif
