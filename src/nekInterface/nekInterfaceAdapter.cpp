@@ -640,19 +640,19 @@ int nek_setup(MPI_Comm c, setupAide &options_in, ins_t **ins_in) {
   //m_ascent_node["state/time"].set_external(&m_time);
   //m_ascent_node["state/cycle"].set_external(&m_cycle);
   //m_ascent_node["state/domain_id"] = myRank;
-  m_ascent_node["state/info"] = "In Situ Pseudocolor rendering of VElocity from NekRS Simulation";
+  //m_ascent_node["state/info"] = "In Situ Pseudocolor rendering of VElocity from NekRS Simulation";
 
-  m_ascent_node["fields/velocity/association"] = "vertex";
-  m_ascent_node["fields/velocity/topology"]    = "mesh";
-  m_ascent_node["fields/velocity/values/u"].set_external(m_xd);
-  m_ascent_node["fields/velocity/values/v"].set_external(m_yd);
-  m_ascent_node["fields/velocity/values/w"].set_external(m_zd);
+  //m_ascent_node["fields/velocity/association"] = "vertex";
+  //m_ascent_node["fields/velocity/topology"]    = "mesh";
+  //m_ascent_node["fields/velocity/values/u"].set_external(m_xd);
+  //m_ascent_node["fields/velocity/values/v"].set_external(m_yd);
+  //m_ascent_node["fields/velocity/values/w"].set_external(m_zd);
 
-  conduit::Node verify_info;
-  if(!conduit::blueprint::mesh::verify(m_ascent_node,verify_info))
-  {
-    CONDUIT_INFO("blueprint verify failed!" + verify_info.to_json());
-  }
+  //conduit::Node verify_info;
+  //if(!conduit::blueprint::mesh::verify(m_ascent_node,verify_info))
+  //{
+  //  CONDUIT_INFO("blueprint verify failed!" + verify_info.to_json());
+  //}
 
   return 0;
 }
@@ -820,14 +820,10 @@ void nek_ascent_s1(dfloat time) {
   dfloat *vaz = (*ins)->U + 2*(*ins)->fieldOffset;
   o_vax.copyFrom(vax);  
 
-
   // Update Ascent velocity
   m_xd = vax;
   m_yd = vay;
   m_zd = vaz;
-
-
-
 
   // find the local maximum of velocity in x-direction
   (*ins)->maxKernel((*ins)->Nlocal, o_vax, o_tmp);
