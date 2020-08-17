@@ -279,11 +279,31 @@ void ascent_test(MPI_Comm comm_in)
   {
     CONDUIT_INFO("blueprint verify passed!" + verify_info.to_json());
   }
-  cout << "Ascent Testing Done\n" << endl;
+  cout << "Ascent Test 1 Done\n" << endl;
+
+  ascent.publish(mesh_data);
+
+  cout << "Ascent Test 2 Done\n" << endl;
+
+  conduit::Node scenes;
+  scenes["s1/plots/p1/type"]  = "mesh";
+  scenes["s1/image_name"] = "TEST";
+
+  conduit::Node actions;
+  conduit::Node &add_plots = actions.append();
+  add_plots["action"] = "add_scenes";
+  add_plots["scenes"] = scenes;
+
+  ascent.execute(actions);
+
+  //runtime info
+  conduit::Node info;
+  ascent.info(info);
+  info.print();
 
   // Dump Data
   //mesh_data.print();
-//// ASCENT /////
+  //// ASCENT /////
 
 }
 
