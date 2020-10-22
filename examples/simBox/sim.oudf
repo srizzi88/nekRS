@@ -1,0 +1,7 @@
+// Boundary conditions
+void insVelocityDirichletConditions3D(bcData *bc)
+{                       
+  bc->uP = 0.0;
+  bc->vP = 0.0;
+  bc->wP = 0.0;
+}
