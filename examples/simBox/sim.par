@@ -3,7 +3,7 @@ backend = SERIAL
 deviceNumber = LOCAL-RANK
 
 [GENERAL] 
-polynomialOrder = 7
+polynomialOrder = 1
 #startFrom = restart.fld
 numSteps = 10
 dt = 1e-03 
