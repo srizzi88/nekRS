@@ -217,6 +217,7 @@ void ascent_test(MPI_Comm comm_in)
   MPI_Comm_dup(comm_in, &comm);
   MPI_Comm_rank(comm, &rank);
   MPI_Comm_size(comm, &size);
+
 /// ASCENT ////
   mesh_t *mesh = ins->mesh;
 
@@ -244,6 +245,12 @@ void ascent_test(MPI_Comm comm_in)
     }
   }
 
+  int esize = mesh->Nelements;
+  std::vector<dfloat> a_ec(esize);
+  for(dlong e=0;e<mesh->Nelements;++e){
+        a_ec[e] = e;
+  }
+
   Ascent ascent;
   Node ascent_opts;
 
@@ -263,12 +270,37 @@ void ascent_test(MPI_Comm comm_in)
   mesh_data["topologies/mesh/coordset"]       = "coords";
   mesh_data["topologies/mesh/elements/shape"] = "hex";  // Note "hexs" - documentation on Ascent/Conduit webpage is incorrect
   mesh_data["topologies/mesh/elements/connectivity"].set_external(a_etov);
+  
   //
   // one or more scalar fields
   mesh_data["fields/xcoor/type"]         = "scalar";
   mesh_data["fields/xcoor/topology"]     = "mesh";
   mesh_data["fields/xcoor/association"]  = "vertex";
-  mesh_data["fields/xcoor/values"].set_external(a_xc);
+  mesh_data["fields/xcoor/values"].set_external(a_ec);
+
+  /* Cy and Matt's fix
+  std::vector<dlong> a_cy(vsize);
+  mesh_data["topologies/my_points/type"]           = "unstructured";
+  mesh_data["topologies/my_points/coordset"]       = "coords";
+  mesh_data["topologies/my_points/elements/shape"] = "point";
+  for(int i=0; i < vsize; i++)
+  {
+    a_cy[i] = i;
+  }
+  mesh_data["topologies/my_points/elements/connectivity"].set_external(a_cy);
+
+  mesh_data["fields/my_point_field/type"] =  "scalar";
+  mesh_data["fields/my_point_field/topology"] = "my_points";
+  mesh_data["fields/my_point_field/association"]  = "vertex";
+  mesh_data["fields/my_point_field/values"].set_external(a_xc);
+
+  conduit::Node scenes;
+  scenes["s1/plots/p1/type"]  = "pseudocolor";
+  scenes["s1/plots/p1/field"]  = "my_point_field";
+  scenes["s1/image_name"] = "TEST";
+  scenes["s1/plots/p1/points/radius"] = .02;
+  */// End Cy and Matt's Fix - This will output the points
+
 
   conduit::Node verify_info;
   if(!conduit::blueprint::mesh::verify(mesh_data,verify_info))
@@ -285,24 +317,24 @@ void ascent_test(MPI_Comm comm_in)
 
   cout << "Ascent Test 2 Done\n" << endl;
 
-  conduit::Node scenes;
-  scenes["s1/plots/p1/type"]  = "mesh";
-  scenes["s1/image_name"] = "TEST";
+  //conduit::Node scenes;
+  //scenes["s1/plots/p1/type"]  = "mesh";
+  //scenes["s1/image_name"] = "TEST";
 
-  conduit::Node actions;
-  conduit::Node &add_plots = actions.append();
-  add_plots["action"] = "add_scenes";
-  add_plots["scenes"] = scenes;
+  //conduit::Node actions;
+  //conduit::Node &add_plots = actions.append();
+  //add_plots["action"] = "add_scenes";
+  //add_plots["scenes"] = scenes;
 
-  ascent.execute(actions);
+  //ascent.execute(actions);
 
   //runtime info
-  conduit::Node info;
-  ascent.info(info);
-  info.print();
+  //conduit::Node info;
+  //ascent.info(info);
+  //info.print();
 
   // Dump Data
-  //mesh_data.print();
+  mesh_data.print();
   //// ASCENT /////
 
 }
