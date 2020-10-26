@@ -224,6 +224,8 @@ void ascent_test(MPI_Comm comm_in)
 /// Let's See EToV
   //meshPrint3D(mesh);
 
+/// Pass the x,y,z mesh variables
+  /*
   int vsize = mesh->Nelements*mesh->Np;
   std::vector<dfloat> a_xc(vsize);
   std::vector<dfloat> a_yc(vsize);
@@ -233,14 +235,21 @@ void ascent_test(MPI_Comm comm_in)
     a_xc[i] = mesh->x[i];
     a_yc[i] = mesh->y[i];
     a_zc[i] = mesh->z[i];
-  }
+  }*/
 
   int csize = mesh->Nelements*mesh->Nverts;
   std::vector<dlong> a_etov(csize);
+  std::vector<dfloat> a_xc(csize);
+  std::vector<dfloat> a_yc(csize);
+  std::vector<dfloat> a_zc(csize);
   int ci = 0;
   for(dlong e=0;e<mesh->Nelements;++e){
     for(int v=0;v<mesh->Nverts;++v){
-        a_etov[ci] = mesh->EToV[e*mesh->Nverts+v];
+        //a_etov[ci] = mesh->EToV[e*mesh->Nverts+v];
+        a_etov[ci] = ci;
+        a_xc[ci] = mesh->EX[e*mesh->Nverts+v];
+        a_yc[ci] = mesh->EY[e*mesh->Nverts+v];
+        a_zc[ci] = mesh->EZ[e*mesh->Nverts+v];
         ci = ci + 1;
     }
   }
@@ -273,11 +282,11 @@ void ascent_test(MPI_Comm comm_in)
   
   //
   // one or more scalar fields
-  mesh_data["fields/xcoor/type"]         = "scalar";
-  mesh_data["fields/xcoor/topology"]     = "mesh";
-  mesh_data["fields/xcoor/association"]  = "vertex";
-  mesh_data["fields/xcoor/values"].set_external(a_ec);
-
+  mesh_data["fields/my_field/type"]         = "scalar";
+  mesh_data["fields/my_field/topology"]     = "mesh";
+  mesh_data["fields/my_field/association"]  = "element";
+  mesh_data["fields/my_field/values"].set_external(a_ec);
+  
   /* Cy and Matt's fix
   std::vector<dlong> a_cy(vsize);
   mesh_data["topologies/my_points/type"]           = "unstructured";
@@ -317,16 +326,16 @@ void ascent_test(MPI_Comm comm_in)
 
   cout << "Ascent Test 2 Done\n" << endl;
 
-  //conduit::Node scenes;
-  //scenes["s1/plots/p1/type"]  = "mesh";
-  //scenes["s1/image_name"] = "TEST";
+  conduit::Node scenes;
+  scenes["s1/plots/p1/type"]  = "mesh";
+  scenes["s1/image_name"] = "TEST";
 
-  //conduit::Node actions;
-  //conduit::Node &add_plots = actions.append();
-  //add_plots["action"] = "add_scenes";
-  //add_plots["scenes"] = scenes;
+  conduit::Node actions;
+  conduit::Node &add_plots = actions.append();
+  add_plots["action"] = "add_scenes";
+  add_plots["scenes"] = scenes;
 
-  //ascent.execute(actions);
+  ascent.execute(actions);
 
   //runtime info
   //conduit::Node info;
@@ -334,7 +343,7 @@ void ascent_test(MPI_Comm comm_in)
   //info.print();
 
   // Dump Data
-  mesh_data.print();
+  //mesh_data.print();
   //// ASCENT /////
 
 }
